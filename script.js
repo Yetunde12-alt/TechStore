@@ -338,9 +338,12 @@ if (googleLoginButton) {
     googleLoginButton.addEventListener("click", async function() {
 
         const { error } =
-            await supabaseClient.auth.signInWithOAuth({
-                provider: "google"
-            });
+    await supabaseClient.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+            redirectTo: "https://yetunde12-alt.github.io/TechStore/"
+        }
+    });
 
 
         if (error) {
