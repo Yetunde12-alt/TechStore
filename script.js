@@ -379,3 +379,90 @@ async function checkLogin() {
 
 
 checkLogin();
+// -------------------------------------
+// Save Order to Supabase
+// -------------------------------------
+
+const checkoutForm =
+    document.getElementById("checkoutForm");
+
+
+if (checkoutForm) {
+
+    checkoutForm.addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+
+        const customerName =
+            document.getElementById("customerName").value;
+
+        const customerEmail =
+            document.getElementById("customerEmail").value;
+
+        const customerAddress =
+            document.getElementById("customerAddress").value;
+
+
+        const { data: { session } } =
+            await supabaseClient.auth.getSession();
+
+
+        if (!session) {
+
+            alert("Please sign in with Google before placing your order.");
+
+            return;
+
+        }
+
+
+        let total = 0;
+
+        cart.forEach(function(item) {
+
+            total += item.price * item.quantity;
+
+        });
+
+
+        const { error } =
+            await supabaseClient
+                .from("orders")
+                .insert({
+
+                    customer_name: customerName,
+
+                    customer_email: customerEmail,
+
+                    delivery_address: customerAddress,
+
+                    order_items: cart,
+
+                    total_amount: total,
+
+                    user_id: session.user.id
+
+                });
+
+
+        if (error) {
+
+            alert("Order failed: " + error.message);
+
+            return;
+
+        }
+
+
+        alert("Order placed successfully!");
+
+        localStorage.removeItem("techStoreCart");
+
+        cart = [];
+
+        checkoutForm.reset();
+
+    });
+
+}

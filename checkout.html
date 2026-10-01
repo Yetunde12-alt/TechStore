@@ -166,8 +166,19 @@
 
     </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <script src="script.js"></script>
+<script>
+    const SUPABASE_URL = "https://lcxpbpyjstkidoyhulev.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_pNOrcuZDpABJfF9MT8dCGw_bEXk570C";
+
+    const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+</script>
+
+<script src="script.js"></script>
 
 </body>
 
