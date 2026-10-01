@@ -355,3 +355,27 @@ if (googleLoginButton) {
     });
 
 }
+
+// -------------------------------------
+// Check Google Login Session
+// -------------------------------------
+
+async function checkLogin() {
+
+    const { data: { session } } =
+        await supabaseClient.auth.getSession();
+
+
+    if (session) {
+
+        googleLoginButton.textContent =
+            "Signed in as " + session.user.email;
+
+        googleLoginButton.disabled = true;
+
+    }
+
+}
+
+
+checkLogin();
