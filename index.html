@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>TechStore</title>
+
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<body>
+
+    <!-- Header -->
+    <header class="site-header">
+
+        <div class="logo">
+            TechStore
+        </div>
+
+        <nav>
+
+            <a href="index.html">Home</a>
+
+            <a href="#products">Products</a>
+
+            <a href="#cart">Cart</a>
+
+            <a href="#login">Login</a>
+
+        </nav>
+
+    </header>
+
+
+    <!-- Main content -->
+    <main>
+
+        <!-- Hero section -->
+        <section class="hero">
+
+            <h1>
+                Welcome to TechStore
+            </h1>
+
+            <p>
+                Quality gadgets and accessories at great prices.
+            </p>
+
+            <a href="#products" class="shop-button">
+                Shop Now
+            </a>
+
+        </section>
+
+
+        <!-- Products section -->
+        <section id="products" class="products-section">
+
+            <h2>
+                Our Products
+            </h2>
+
+            <div class="products-container">
+
+
+                <!-- Product 1 -->
+                <article class="product-card">
+
+                    <div class="product-image">
+                        📱
+                    </div>
+
+                    <h3>
+                        Smartphone
+                    </h3>
+
+                    <p class="price">
+                        ₦450,000
+                    </p>
+
+                    <button class="add-to-cart">
+                        Add to Cart
+                    </button>
+
+                </article>
+
+
+                <!-- Product 2 -->
+                <article class="product-card">
+
+                    <div class="product-image">
+                        💻
+                    </div>
+
+                    <h3>
+                        Laptop
+                    </h3>
+
+                    <p class="price">
+                        ₦850,000
+                    </p>
+
+                    <button class="add-to-cart">
+                        Add to Cart
+                    </button>
+
+                </article>
+
+
+                <!-- Product 3 -->
+                <article class="product-card">
+
+                    <div class="product-image">
+                        🎧
+                    </div>
+
+                    <h3>
+                        Wireless Headphones
+                    </h3>
+
+                    <p class="price">
+                        ₦75,000
+                    </p>
+
+                    <button class="add-to-cart">
+                        Add to Cart
+                    </button>
+
+                </article>
+
+
+                <!-- Product 4 -->
+                <article class="product-card">
+
+                    <div class="product-image">
+                        ⌚
+                    </div>
+
+                    <h3>
+                        Smartwatch
+                    </h3>
+
+                    <p class="price">
+                        ₦120,000
+                    </p>
+
+                    <button class="add-to-cart">
+                        Add to Cart
+                    </button>
+
+                </article>
+
+
+                <!-- Product 5 -->
+                <article class="product-card">
+
+                    <div class="product-image">
+                        🔋
+                    </div>
+
+                    <h3>
+                        Power Bank
+                    </h3>
+
+                    <p class="price">
+                        ₦35,000
+                    </p>
+
+                    <button class="add-to-cart">
+                        Add to Cart
+                    </button>
+
+                </article>
+
+
+                <!-- Product 6 -->
+                <article class="product-card">
+
+                    <div class="product-image">
+                        🔌
+                    </div>
+
+                    <h3>
+                        USB-C Charger
+                    </h3>
+
+                    <p class="price">
+                        ₦20,000
+                    </p>
+
+                    <button class="add-to-cart">
+                        Add to Cart
+                    </button>
+
+                </article>
+
+            </div>
+
+        </section>
+
+
+        <!-- Cart section -->
+        <section id="cart" class="cart-section">
+
+            <h2>
+                Your Cart
+            </h2>
+
+            <p id="cartMessage">
+                Your cart is currently empty.
+            </p>
+
+        </section>
+
+
+        <!-- Login section -->
+        <section id="login" class="login-section">
+
+            <h2>
+                Customer Login
+            </h2>
+
+            <p>
+                Sign in to your TechStore account.
+            </p>
+
+            <button id="googleLoginButton">
+                Continue with Google
+            </button>
+
+        </section>
+
+    </main>
+
+
+    <!-- Footer -->
+    <footer class="site-footer">
+
+        <p>
+            &copy; 2026 TechStore. All rights reserved.
+        </p>
+
+    </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    const SUPABASE_URL=https;//lcxpbpyjstkidoyhulev.supabase.co
+    const SUPABASE_KEY = sb_publishable_pNOrcuZDpABJfF9MT8dCGw_bEXk570C;
+
+    const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+</script>
+
+<script src="script.js"></script>
+
+</body>
+    
+
+</body>
+
+</html>
