@@ -457,11 +457,29 @@ if (checkoutForm) {
 
         alert("Order placed successfully!");
 
-        localStorage.removeItem("techStoreCart");
+// Send confirmation email
+const { error: emailError } =
+    await supabaseClient.functions.invoke(
+        "hyper-worker",
+        {
+            body: {
+                customerName: customerName,
+                customerEmail: customerEmail,
+                orderItems: cart,
+                totalAmount: total
+            }
+        }
+    );
 
-        cart = [];
+if (emailError) {
+    console.error("Email failed:", emailError);
+} else {
+    console.log("Confirmation email sent.");
+}
 
-        checkoutForm.reset();
+localStorage.removeItem("techStoreCart");
+cart = [];
+checkoutForm.reset();
 
     });
 
