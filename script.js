@@ -648,6 +648,64 @@ async function checkLogin() {
         // Load shared cart
 
         await loadSharedCart();
+                // Create mobile password button
+        const mobilePasswordButton =
+            document.createElement("button");
+
+        mobilePasswordButton.textContent =
+            "Set Mobile App Password";
+
+        mobilePasswordButton.style.marginTop = "10px";
+        mobilePasswordButton.style.padding = "10px";
+        mobilePasswordButton.style.cursor = "pointer";
+
+        mobilePasswordButton.addEventListener(
+            "click",
+            async function () {
+
+                const newPassword =
+                    prompt(
+                        "Create a password for the TechStore mobile app:"
+                    );
+
+                if (!newPassword) {
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+
+                    alert(
+                        "Password must be at least 6 characters."
+                    );
+
+                    return;
+                }
+
+                const { error } =
+                    await supabaseClient.auth.updateUser({
+                        password: newPassword
+                    });
+
+                if (error) {
+
+                    alert(
+                        "Could not set password: " +
+                        error.message
+                    );
+
+                    return;
+                }
+
+                alert(
+                    "Mobile app password created successfully!"
+                );
+
+            }
+        );
+
+        document.body.appendChild(
+            mobilePasswordButton
+        );
 
     }
 
