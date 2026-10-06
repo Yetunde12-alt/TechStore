@@ -40,16 +40,24 @@ const products = [
 // Shopping cart
 // -------------------------------------
 
-let cart = JSON.parse(localStorage.getItem("techStoreCart")) || [];
+let cart =
+    JSON.parse(localStorage.getItem("techStoreCart")) || [];
+
+let currentUser = null;
 
 
 // -------------------------------------
 // Get HTML elements
 // -------------------------------------
 
-const addToCartButtons = document.querySelectorAll(".add-to-cart");
+const addToCartButtons =
+    document.querySelectorAll(".add-to-cart");
 
-const cartMessage = document.getElementById("cartMessage");
+const cartMessage =
+    document.getElementById("cartMessage");
+
+const googleLoginButton =
+    document.getElementById("googleLoginButton");
 
 
 // -------------------------------------
@@ -64,30 +72,190 @@ function formatPrice(price) {
 
 
 // -------------------------------------
-// Add product to cart
+// Get current logged-in user
 // -------------------------------------
 
-function addToCart(productId) {
+async function getCurrentUser() {
 
-    const product = products.find(function(item) {
+    const { data: { session } } =
+        await supabaseClient.auth.getSession();
 
-        return item.id === productId;
+    if (session) {
 
-    });
+        currentUser = session.user;
 
-
-    if (!product) {
-
-        return;
+        return session.user;
 
     }
 
+    currentUser = null;
 
-    const existingItem = cart.find(function(item) {
+    return null;
+}
 
-        return item.id === productId;
+
+// -------------------------------------
+// Load shared cart from Supabase
+// -------------------------------------
+
+async function loadSharedCart() {
+
+    const user = await getCurrentUser();
+
+    if (!user) {
+        return;
+    }
+
+
+    const { data, error } =
+        await supabaseClient
+            .from("cart_items")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("id");
+
+
+    if (error) {
+
+        console.error(
+            "Could not load shared cart:",
+            error.message
+        );
+
+        return;
+    }
+
+
+    cart = data.map(function(item) {
+
+        return {
+            id: Number(item.product_id),
+            name: item.product_name,
+            price: Number(item.price),
+            quantity: item.quantity
+        };
 
     });
+
+
+    localStorage.setItem(
+        "techStoreCart",
+        JSON.stringify(cart)
+    );
+
+
+    updateCart();
+
+    displayCheckoutCart();
+
+}
+
+
+// -------------------------------------
+// Save cart item to Supabase
+// -------------------------------------
+
+async function saveCartItem(item) {
+
+    if (!currentUser) {
+        return;
+    }
+
+
+    const { data: existingItem, error: findError } =
+        await supabaseClient
+            .from("cart_items")
+            .select("id")
+            .eq("user_id", currentUser.id)
+            .eq("product_id", item.id)
+            .maybeSingle();
+
+
+    if (findError) {
+
+        console.error(
+            "Could not check cart item:",
+            findError.message
+        );
+
+        return;
+    }
+
+
+    if (existingItem) {
+
+        const { error } =
+            await supabaseClient
+                .from("cart_items")
+                .update({
+                    quantity: item.quantity
+                })
+                .eq("id", existingItem.id)
+                .eq("user_id", currentUser.id);
+
+
+        if (error) {
+
+            console.error(
+                "Could not update cart:",
+                error.message
+            );
+
+        }
+
+    } else {
+
+        const { error } =
+            await supabaseClient
+                .from("cart_items")
+                .insert({
+                    user_id: currentUser.id,
+                    product_id: item.id,
+                    product_name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                });
+
+
+        if (error) {
+
+            console.error(
+                "Could not save cart:",
+                error.message
+            );
+
+        }
+
+    }
+
+}
+
+
+// -------------------------------------
+// Add product to cart
+// -------------------------------------
+
+async function addToCart(productId) {
+
+    const product =
+        products.find(function(item) {
+
+            return item.id === productId;
+
+        });
+
+
+    if (!product) {
+        return;
+    }
+
+
+    const existingItem =
+        cart.find(function(item) {
+
+            return item.id === productId;
+
+        });
 
 
     if (existingItem) {
@@ -113,6 +281,27 @@ function addToCart(productId) {
 
     updateCart();
 
+
+    if (currentUser) {
+
+        const item =
+            cart.find(function(item) {
+
+                return item.id === productId;
+
+            });
+
+        await saveCartItem(item);
+
+    } else {
+
+        localStorage.setItem(
+            "techStoreCart",
+            JSON.stringify(cart)
+        );
+
+    }
+
 }
 
 
@@ -122,25 +311,23 @@ function addToCart(productId) {
 
 function updateCart() {
 
-    // Save cart in browser
     localStorage.setItem(
         "techStoreCart",
         JSON.stringify(cart)
     );
-        // Stop if this page does not have a cart section
+
+
     if (!cartMessage) {
         return;
     }
 
 
-    // If cart is empty
     if (cart.length === 0) {
 
         cartMessage.textContent =
             "Your cart is currently empty.";
 
         return;
-
     }
 
 
@@ -198,7 +385,8 @@ function updateCart() {
     `;
 
 
-    cartMessage.innerHTML = cartHTML;
+    cartMessage.innerHTML =
+        cartHTML;
 
 }
 
@@ -207,16 +395,39 @@ function updateCart() {
 // Remove product from cart
 // -------------------------------------
 
-function removeFromCart(productId) {
+async function removeFromCart(productId) {
 
-    cart = cart.filter(function(item) {
+    cart =
+        cart.filter(function(item) {
 
-        return item.id !== productId;
+            return item.id !== productId;
 
-    });
+        });
 
 
     updateCart();
+
+
+    if (currentUser) {
+
+        const { error } =
+            await supabaseClient
+                .from("cart_items")
+                .delete()
+                .eq("user_id", currentUser.id)
+                .eq("product_id", productId);
+
+
+        if (error) {
+
+            console.error(
+                "Could not remove cart item:",
+                error.message
+            );
+
+        }
+
+    }
 
 }
 
@@ -227,22 +438,21 @@ function removeFromCart(productId) {
 
 addToCartButtons.forEach(function(button, index) {
 
-    button.addEventListener("click", function() {
+    button.addEventListener(
+        "click",
+        function() {
 
-        const productId = products[index].id;
+            const productId =
+                products[index].id;
 
-        addToCart(productId);
+            addToCart(productId);
 
-    });
+        }
+    );
 
 });
 
 
-// -------------------------------------
-// Display saved cart when page opens
-// -------------------------------------
-
-updateCart();
 // -------------------------------------
 // Display cart on checkout page
 // -------------------------------------
@@ -256,24 +466,20 @@ function displayCheckoutCart() {
         document.getElementById("checkoutTotal");
 
 
-    // Stop if we are not on the checkout page
     if (!checkoutItems || !checkoutTotal) {
-
         return;
-
     }
 
 
-    // If cart is empty
     if (cart.length === 0) {
 
         checkoutItems.innerHTML =
             "<p>Your cart is empty.</p>";
 
-        checkoutTotal.textContent = "₦0";
+        checkoutTotal.textContent =
+            "₦0";
 
         return;
-
     }
 
 
@@ -315,7 +521,8 @@ function displayCheckoutCart() {
     });
 
 
-    checkoutItems.innerHTML = checkoutHTML;
+    checkoutItems.innerHTML =
+        checkoutHTML;
 
     checkoutTotal.textContent =
         formatPrice(total);
@@ -323,38 +530,86 @@ function displayCheckoutCart() {
 }
 
 
-// Display checkout cart
-displayCheckoutCart();
+// -------------------------------------
+// Move old local cart to Supabase
+// -------------------------------------
+
+async function migrateLocalCart() {
+
+    const user =
+        await getCurrentUser();
+
+    if (!user) {
+        return;
+    }
+
+
+    const localCart =
+        JSON.parse(
+            localStorage.getItem("techStoreCart")
+        ) || [];
+
+
+    if (localCart.length === 0) {
+        return;
+    }
+
+
+    for (const item of localCart) {
+
+        await saveCartItem(item);
+
+    }
+
+
+    localStorage.removeItem(
+        "techStoreCart"
+    );
+
+}
+
+
 // -------------------------------------
 // Google Login
 // -------------------------------------
 
-const googleLoginButton =
-    document.getElementById("googleLoginButton");
-
-
 if (googleLoginButton) {
 
-    googleLoginButton.addEventListener("click", async function() {
+    googleLoginButton.addEventListener(
+        "click",
+        async function() {
 
-        const { error } =
-    await supabaseClient.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-            redirectTo: "https://yetunde12-alt.github.io/TechStore/"
+            const { error } =
+                await supabaseClient
+                    .auth
+                    .signInWithOAuth({
+
+                        provider: "google",
+
+                        options: {
+
+                            redirectTo:
+                                "https://yetunde12-alt.github.io/TechStore/"
+
+                        }
+
+                    });
+
+
+            if (error) {
+
+                alert(
+                    "Google login failed: " +
+                    error.message
+                );
+
+            }
+
         }
-    });
-
-
-        if (error) {
-
-            alert("Google login failed: " + error.message);
-
-        }
-
-    });
+    );
 
 }
+
 
 // -------------------------------------
 // Check Google Login Session
@@ -368,17 +623,44 @@ async function checkLogin() {
 
     if (session) {
 
-        googleLoginButton.textContent =
-            "Signed in as " + session.user.email;
+        currentUser =
+            session.user;
 
-        googleLoginButton.disabled = true;
+
+        if (googleLoginButton) {
+
+            googleLoginButton.textContent =
+                "Signed in as " +
+                session.user.email;
+
+            googleLoginButton.disabled =
+                true;
+
+        }
+
+
+        // Move existing browser cart
+        // into shared cart
+
+        await migrateLocalCart();
+
+
+        // Load shared cart
+
+        await loadSharedCart();
 
     }
 
 }
 
 
+// -------------------------------------
+// Start login check
+// -------------------------------------
+
 checkLogin();
+
+
 // -------------------------------------
 // Save Order to Supabase
 // -------------------------------------
@@ -389,98 +671,187 @@ const checkoutForm =
 
 if (checkoutForm) {
 
-    checkoutForm.addEventListener("submit", async function(event) {
+    checkoutForm.addEventListener(
+        "submit",
+        async function(event) {
 
-        event.preventDefault();
-
-
-        const customerName =
-            document.getElementById("customerName").value;
-
-        const customerEmail =
-            document.getElementById("customerEmail").value;
-
-        const customerAddress =
-            document.getElementById("customerAddress").value;
+            event.preventDefault();
 
 
-        const { data: { session } } =
-            await supabaseClient.auth.getSession();
+            const customerName =
+                document
+                    .getElementById("customerName")
+                    .value;
 
 
-        if (!session) {
-
-            alert("Please sign in with Google before placing your order.");
-
-            return;
-
-        }
+            const customerEmail =
+                document
+                    .getElementById("customerEmail")
+                    .value;
 
 
-        let total = 0;
+            const customerAddress =
+                document
+                    .getElementById("customerAddress")
+                    .value;
 
-        cart.forEach(function(item) {
 
-            total += item.price * item.quantity;
+            const { data: { session } } =
+                await supabaseClient
+                    .auth
+                    .getSession();
+
+
+            if (!session) {
+
+                alert(
+                    "Please sign in with Google before placing your order."
+                );
+
+                return;
+
+            }
+
+
+            let total = 0;
+
+
+            cart.forEach(function(item) {
+
+                total +=
+                    item.price *
+                    item.quantity;
+
+            });
+
+
+            // -------------------------------------
+            // Save order
+            // -------------------------------------
+
+            const { error } =
+                await supabaseClient
+                    .from("orders")
+                    .insert({
+
+                        customer_name:
+                            customerName,
+
+                        customer_email:
+                            customerEmail,
+
+                        delivery_address:
+                            customerAddress,
+
+                        order_items:
+                            cart,
+
+                        total_amount:
+                            total,
+
+                        user_id:
+                            session.user.id
+
+                    });
+
+
+            if (error) {
+
+                alert(
+                    "Order failed: " +
+                    error.message
+                );
+
+                return;
+
+            }
+
+
+            alert(
+                "Order placed successfully!"
+            );
+
+
+            // -------------------------------------
+            // Send confirmation email
+            // -------------------------------------
+
+            const { error: emailError } =
+                await supabaseClient
+                    .functions
+                    .invoke(
+                        "hyper-worker",
+                        {
+                            body: {
+
+                                customerName:
+                                    customerName,
+
+                                customerEmail:
+                                    customerEmail,
+
+                                orderItems:
+                                    cart,
+
+                                totalAmount:
+                                    total
+
+                            }
+
+                        }
+                    );
+
+
+            if (emailError) {
+
+                console.error(
+                    "Email failed:",
+                    emailError
+                );
+
+            } else {
+
+                console.log(
+                    "Confirmation email sent."
+                );
+
+            }
+
+
+            // -------------------------------------
+            // Clear shared cart after order
+            // -------------------------------------
+
+            await supabaseClient
+                .from("cart_items")
+                .delete()
+                .eq(
+                    "user_id",
+                    session.user.id
+                );
+
+
+            // Clear browser cart
+
+            localStorage.removeItem(
+                "techStoreCart"
+            );
+
+
+            cart = [];
+
+
+            // Clear checkout form
+
+            checkoutForm.reset();
+
+
+            // Update screen
+
+            updateCart();
+
+            displayCheckoutCart();
 
         });
-
-
-        const { error } =
-            await supabaseClient
-                .from("orders")
-                .insert({
-
-                    customer_name: customerName,
-
-                    customer_email: customerEmail,
-
-                    delivery_address: customerAddress,
-
-                    order_items: cart,
-
-                    total_amount: total,
-
-                    user_id: session.user.id
-
-                });
-
-
-        if (error) {
-
-            alert("Order failed: " + error.message);
-
-            return;
-
-        }
-
-
-        alert("Order placed successfully!");
-
-// Send confirmation email
-const { error: emailError } =
-    await supabaseClient.functions.invoke(
-        "hyper-worker",
-        {
-            body: {
-                customerName: customerName,
-                customerEmail: customerEmail,
-                orderItems: cart,
-                totalAmount: total
-            }
-        }
-    );
-
-if (emailError) {
-    console.error("Email failed:", emailError);
-} else {
-    console.log("Confirmation email sent.");
-}
-
-localStorage.removeItem("techStoreCart");
-cart = [];
-checkoutForm.reset();
-
-    });
 
 }
